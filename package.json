@@ -13,6 +13,7 @@
   },
   "devDependencies": {},
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "postinstall": "npm install --omit=dev"
   }
 }
