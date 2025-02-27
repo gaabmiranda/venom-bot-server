@@ -21,7 +21,7 @@ async function startBot() {
         headless: true, // O Railway não suporta navegador visível
         useChrome: false, // Trocar para false para evitar erros de compatibilidade
         disableSpins: true,
-        mkdirFolderToken: true,
+        mkdirFolderToken: 'bot-session', // ❌ Antes estava `true`, agora é uma string
         folderNameToken: 'bot-session',
         logQR: false,
         browserArgs: [
