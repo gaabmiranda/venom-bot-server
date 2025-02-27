@@ -1,10 +1,10 @@
-# Usa a imagem do Node.js com suporte a apt-get
+# Usa a imagem correta do Node.js
 FROM node:18-bullseye
 
 # Configura para evitar prompts interativos do apt-get
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Instala dependências do Chromium
+# 🛠️ Adiciona um Fix para evitar problemas com pacotes travados
 RUN apt-get update && apt-get install -y --no-install-recommends \
   libnss3 libxss1 libasound2 \
   libatk1.0-0 libatk-bridge2.0-0 libcups2 \
