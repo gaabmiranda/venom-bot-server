@@ -1,19 +1,14 @@
-# Usa a imagem correta com suporte a apt-get
-FROM node:18-bullseye
+# Usa Alpine (mais leve, mas sem apt-get)
+FROM node:18-alpine
 
-# Configura o ambiente para evitar prompts do apt-get
-ENV DEBIAN_FRONTEND=noninteractive
-
-# Instala os pacotes necessários para Chromium e Puppeteer
-RUN apt-get update && apt-get install -y --no-install-recommends \
-  libnss3 libxss1 libasound2 \
-  libatk1.0-0 libatk-bridge2.0-0 libcups2 \
-  libxcomposite1 libxdamage1 libxrandr2 \
-  libgbm1 libpango-1.0-0 libpangocairo-1.0-0 \
-  libxshmfence1 libxinerama1 libxfixes3 fonts-liberation \
-  chromium chromium-driver \
-  && apt-get clean \
-  && rm -rf /var/lib/apt/lists/*
+# Instala os pacotes necessários para o Puppeteer e Chromium
+RUN apk add --no-cache \
+  chromium \
+  nss \
+  freetype \
+  harfbuzz \
+  ca-certificates \
+  ttf-freefont
 
 # Define o diretório de trabalho
 WORKDIR /app
