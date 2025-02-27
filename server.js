@@ -13,12 +13,21 @@ async function startBot() {
   try {
     client = await venom.create({
       session: 'bot-session',
-      headless: false, // Altere para true se quiser ocultar o navegador
-      useChrome: true,
+      headless: true, // Necessário para rodar no Railway
+      useChrome: false, // Railway já usa Puppeteer, não precisa do Chrome
       disableSpins: true,
-      mkdirFolderToken: 'true',
+      mkdirFolderToken: true,
       folderNameToken: 'bot-session',
-      logQR: true,
+      logQR: false,
+      browserArgs: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--no-first-run',
+        '--no-zygote',
+        '--disable-gpu'
+      ]
     });
 
     console.log('✅ Bot conectado ao WhatsApp!');
