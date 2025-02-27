@@ -12,14 +12,23 @@ let isBotReady = false; // Indica se o bot está pronto
 async function startBot() {
   try {
     client = await venom.create({
-      session: 'bot-session',
-      headless: false, // Troque para true se quiser ocultar o navegador
-      useChrome: true,
-      disableSpins: true,
-      mkdirFolderToken: 'true',
-      folderNameToken: 'bot-session',
-      logQR: true,
-    });
+  session: 'bot-session',
+  headless: true, // O Railway não suporta navegador visível
+  useChrome: false, // Trocar para false para evitar erros de compatibilidade
+  disableSpins: true,
+  mkdirFolderToken: 'true',
+  folderNameToken: 'bot-session',
+  logQR: true,
+  browserArgs: [
+    '--no-sandbox',
+    '--disable-setuid-sandbox',
+    '--disable-dev-shm-usage',
+    '--disable-accelerated-2d-canvas',
+    '--no-first-run',
+    '--no-zygote',
+    '--disable-gpu'
+  ]
+});
 
     console.log('✅ Bot conectado ao WhatsApp!');
     isBotReady = true; // Marca o bot como pronto para enviar mensagens
