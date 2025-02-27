@@ -11,24 +11,30 @@ let isBotReady = false; // Indica se o bot está pronto
 
 async function startBot() {
   try {
-    client = await venom.create({
-  session: 'bot-session',
-  headless: true, // O Railway não suporta navegador visível
-  useChrome: false, // Trocar para false para evitar erros de compatibilidade
-  disableSpins: true,
-  mkdirFolderToken: 'true',
-  folderNameToken: 'bot-session',
-  logQR: true,
-  browserArgs: [
-    '--no-sandbox',
-    '--disable-setuid-sandbox',
-    '--disable-dev-shm-usage',
-    '--disable-accelerated-2d-canvas',
-    '--no-first-run',
-    '--no-zygote',
-    '--disable-gpu'
-  ]
-});
+    client = await venom.create(
+      'bot-session',
+      (base64Qr, asciiQR) => {
+        console.log('📷 Novo QR Code gerado! Escaneie para conectar.');
+      },
+      undefined,
+      {
+        headless: true, // O Railway não suporta navegador visível
+        useChrome: false, // Trocar para false para evitar erros de compatibilidade
+        disableSpins: true,
+        mkdirFolderToken: true,
+        folderNameToken: 'bot-session',
+        logQR: false,
+        browserArgs: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-accelerated-2d-canvas',
+          '--no-first-run',
+          '--no-zygote',
+          '--disable-gpu'
+        ]
+      }
+    );
 
     console.log('✅ Bot conectado ao WhatsApp!');
     isBotReady = true; // Marca o bot como pronto para enviar mensagens
@@ -51,20 +57,22 @@ async function startBot() {
 // Inicia o bot ao rodar o servidor
 startBot();
 
-// Rota para fornecer o QR Code ao site
+// **Nova Rota Para Obter o QR Code**
 app.get('/qr', (req, res) => {
   if (isBotReady) {
     res.json({ success: true, message: '✅ O bot está pronto! Escaneie o QR Code para conectar.' });
   } else {
+    console.log('⚠️ Tentativa de acessar /qr enquanto o bot não está pronto.');
     res.status(400).json({ error: '⚠️ O bot ainda não está pronto. Aguarde e tente novamente.' });
   }
 });
 
-// Endpoint para enviar mensagens pelo WhatsApp
+// **Endpoint para enviar mensagens pelo WhatsApp**
 app.post('/send-message', async (req, res) => {
   const { number, message } = req.body;
 
   if (!isBotReady || !client) {
+    console.log('⚠️ Tentativa de envio de mensagem enquanto o bot não estava pronto.');
     return res.status(500).json({ error: '⚠️ O bot ainda não está pronto. Aguarde e tente novamente.' });
   }
 
@@ -77,5 +85,8 @@ app.post('/send-message', async (req, res) => {
   }
 });
 
-// Inicia a API na porta 3000
-app.listen(3000, () => console.log('🚀 API rodando na porta 3000'));
+// **Inicia a API na porta correta no Railway**
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`🚀 API rodando na porta ${PORT}`);
+});
