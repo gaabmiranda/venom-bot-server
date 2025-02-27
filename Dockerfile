@@ -1,5 +1,14 @@
-# Usa a imagem oficial do Node.js
-FROM node:18-bullseye
+# Usa uma imagem Alpine (mais leve)
+FROM node:18-alpine
+
+# Instala apenas as bibliotecas essenciais do Puppeteer
+RUN apk add --no-cache \
+  chromium \
+  nss \
+  freetype \
+  harfbuzz \
+  ca-certificates \
+  ttf-freefont
 
 # Define o diretório de trabalho
 WORKDIR /app
