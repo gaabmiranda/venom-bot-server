@@ -19,20 +19,21 @@ async function startBot() {
       undefined,
       {
         headless: true, // O Railway não suporta navegador visível
-        useChrome: false, // Trocar para false para evitar erros de compatibilidade
+        useChrome: false, // Evita conflitos com Chrome
         disableSpins: true,
-        mkdirFolderToken: 'bot-session', // ❌ Antes estava `true`, agora é uma string
+        mkdirFolderToken: 'bot-session', // Deve ser uma string válida
         folderNameToken: 'bot-session',
         logQR: false,
-        browserArgs: [
+        puppeteerOptions: { args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
           '--disable-dev-shm-usage',
           '--disable-accelerated-2d-canvas',
           '--no-first-run',
           '--no-zygote',
+          '--single-process',
           '--disable-gpu'
-        ]
+        ] }
       }
     );
 
@@ -44,7 +45,7 @@ async function startBot() {
       const isConnected = await client.isConnected();
       if (!isConnected) {
         console.log('⚠️ O bot perdeu a conexão! Escaneie o QR Code novamente.');
-        isBotReady = false; // Marca que o bot não está pronto
+        isBotReady = false;
       }
     }, 5000);
 
