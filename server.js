@@ -22,22 +22,24 @@ async function startBot() {
       undefined,
       {
         headless: true,
-        useChrome: true,
-        executablePath: '/usr/bin/google-chrome',
+        useChrome: false, // 🚀 Evita conflitos no Railway
         disableSpins: true,
         mkdirFolderToken: 'bot-session',
         folderNameToken: 'bot-session',
         logQR: false,
-        browserArgs: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--disable-accelerated-2d-canvas',
-          '--no-first-run',
-          '--no-zygote',
-          '--disable-gpu',
-          '--single-process'
-        ]
+        puppeteerOptions: {
+          executablePath: '/usr/bin/chromium-browser', // 🚀 Força o uso do Chromium no Railway
+          args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-accelerated-2d-canvas',
+            '--no-first-run',
+            '--no-zygote',
+            '--single-process',
+            '--disable-gpu'
+          ]
+        }
       }
     );
 
