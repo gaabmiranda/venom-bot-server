@@ -6,44 +6,56 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-let client = null; // Instância do bot
-let qrCodeBase64 = ''; // Armazena o QR Code em Base64
+let client = null; // Armazena a instância do bot
+let isBotReady = false; // Indica se o bot está pronto
 
 async function startBot() {
-  venom
-    .create(
-      'bot-session',
-      (base64Qr, asciiQR) => {
-        console.log('📷 Novo QR Code gerado! Escaneie para conectar.');
-        qrCodeBase64 = base64Qr; // Salva o QR Code para exibição via API
-      }
-    )
-    .then((bot) => {
-      client = bot;
-      console.log('✅ Bot conectado ao WhatsApp!');
-    })
-    .catch((error) => {
-      console.error('❌ Erro ao iniciar o bot:', error);
+  try {
+    client = await venom.create({
+      session: 'bot-session',
+      headless: false, // Troque para true se quiser ocultar o navegador
+      useChrome: true,
+      disableSpins: true,
+      mkdirFolderToken: 'true',
+      folderNameToken: 'bot-session',
+      logQR: true,
     });
+
+    console.log('✅ Bot conectado ao WhatsApp!');
+    isBotReady = true; // Marca o bot como pronto para enviar mensagens
+
+    // Verifica a conexão do bot a cada 5 segundos
+    setInterval(async () => {
+      const isConnected = await client.isConnected();
+      if (!isConnected) {
+        console.log('⚠️ O bot perdeu a conexão! Escaneie o QR Code novamente.');
+        isBotReady = false; // Marca que o bot não está pronto
+      }
+    }, 5000);
+
+  } catch (error) {
+    console.error('❌ Erro ao iniciar o bot:', error);
+    isBotReady = false;
+  }
 }
 
-// Inicia o bot assim que o servidor for iniciado
+// Inicia o bot ao rodar o servidor
 startBot();
 
-// **Nova Rota Para Obter o QR Code**
+// Rota para fornecer o QR Code ao site
 app.get('/qr', (req, res) => {
-  if (qrCodeBase64) {
-    res.json({ success: true, qrCode: qrCodeBase64 });
+  if (isBotReady) {
+    res.json({ success: true, message: '✅ O bot está pronto! Escaneie o QR Code para conectar.' });
   } else {
-    res.status(400).json({ error: '⚠️ QR Code ainda não gerado. Aguarde alguns segundos e tente novamente.' });
+    res.status(400).json({ error: '⚠️ O bot ainda não está pronto. Aguarde e tente novamente.' });
   }
 });
 
-// **Endpoint para enviar mensagens**
+// Endpoint para enviar mensagens pelo WhatsApp
 app.post('/send-message', async (req, res) => {
   const { number, message } = req.body;
 
-  if (!client) {
+  if (!isBotReady || !client) {
     return res.status(500).json({ error: '⚠️ O bot ainda não está pronto. Aguarde e tente novamente.' });
   }
 
@@ -56,8 +68,5 @@ app.post('/send-message', async (req, res) => {
   }
 });
 
-// **Configura a porta para rodar corretamente no Railway**
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`🚀 API rodando na porta ${PORT}`);
-});
+// Inicia a API na porta 3000
+app.listen(3000, () => console.log('🚀 API rodando na porta 3000'));
