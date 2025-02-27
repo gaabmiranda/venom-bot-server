@@ -8,40 +8,38 @@ app.use(cors());
 
 let client = null; // Instância do bot
 let isBotReady = false; // Indica se o bot está pronto
+let qrCodeBase64 = ''; // Armazena o QR Code em Base64
 
 async function startBot() {
   try {
-    client = await venom.create({
-      session: 'bot-session',
-      headless: true, // Necessário para rodar no Railway
-      useChrome: false, // Railway já usa Puppeteer, não precisa do Chrome
-      disableSpins: true,
-      mkdirFolderToken: true,
-      folderNameToken: 'bot-session',
-      logQR: false,
-      browserArgs: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--no-first-run',
-        '--no-zygote',
-        '--disable-gpu'
-      ]
-    });
+    client = await venom.create(
+      'bot-session',
+      (base64Qr, asciiQR) => {
+        console.log('📷 Novo QR Code gerado!');
+        qrCodeBase64 = base64Qr; // Salva o QR Code
+      },
+      undefined,
+      {
+        headless: true,
+        useChrome: false,
+        disableSpins: true,
+        mkdirFolderToken: true,
+        folderNameToken: 'bot-session',
+        logQR: false,
+        browserArgs: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-accelerated-2d-canvas',
+          '--no-first-run',
+          '--no-zygote',
+          '--disable-gpu'
+        ]
+      }
+    );
 
     console.log('✅ Bot conectado ao WhatsApp!');
     isBotReady = true;
-
-    setInterval(async () => {
-      const isConnected = await client.isConnected();
-      if (!isConnected) {
-        console.log('⚠️ O bot perdeu a conexão! Escaneie o QR Code novamente.');
-        isBotReady = false;
-      } else {
-        console.log('✅ O bot continua conectado.');
-      }
-    }, 5000);
 
   } catch (error) {
     console.error('❌ Erro ao iniciar o bot:', error);
@@ -52,12 +50,12 @@ async function startBot() {
 // Inicia o bot quando o servidor iniciar
 startBot();
 
-// Rota para fornecer o QR Code ao site
+// **Nova Rota Para Obter o QR Code**
 app.get('/qr', (req, res) => {
-  if (isBotReady) {
-    res.json({ success: true, message: '✅ O bot está pronto! Escaneie o QR Code para conectar.' });
+  if (qrCodeBase64) {
+    res.json({ success: true, qrCode: qrCodeBase64 });
   } else {
-    res.status(400).json({ error: '⚠️ O bot ainda não está pronto. Aguarde e tente novamente.' });
+    res.status(400).json({ error: '⚠️ QR Code ainda não gerado' });
   }
 });
 
