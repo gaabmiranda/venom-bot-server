@@ -1,10 +1,10 @@
-# Usa a imagem correta do Node.js
+# Usa a imagem correta do Node.js com suporte a apt-get
 FROM node:18-bullseye
 
-# Configura para evitar prompts interativos do apt-get
+# Evita travas interativas
 ENV DEBIAN_FRONTEND=noninteractive
 
-# 🛠️ Adiciona um Fix para evitar problemas com pacotes travados
+# 🛠️ Instala pacotes com debug ativado para ver erros
 RUN apt-get update && apt-get install -y --no-install-recommends \
   libnss3 libxss1 libasound2 \
   libatk1.0-0 libatk-bridge2.0-0 libcups2 \
@@ -12,8 +12,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   libgbm1 libpango-1.0-0 libpangocairo-1.0-0 \
   libxshmfence1 libxinerama1 libxfixes3 fonts-liberation \
   chromium chromium-driver \
+  -o Debug::pkgProblemResolver=true \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
+
 
 # Define o diretório de trabalho
 WORKDIR /app
