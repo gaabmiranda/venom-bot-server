@@ -15,7 +15,7 @@ async function startBot() {
   try {
     client = await venom.create(
       'bot-session',
-      (base64Qr, asciiQR) => {
+      (base64Qr) => {
         console.log('📷 Novo QR Code gerado! Escaneie para conectar.');
         qrCodeBase64 = base64Qr; // Armazena QR Code para exibição
       },
@@ -66,7 +66,7 @@ async function startBot() {
       if (!isConnected) {
         console.log('⚠️ O bot perdeu a conexão! Tentando reconectar...');
         isBotReady = false;
-        startBot(); // 🔄 Reinicia o bot automaticamente em caso de falha
+        await startBot(); // 🔄 Reinicia o bot automaticamente em caso de falha
       }
     }, 5000);
 
@@ -82,7 +82,13 @@ startBot();
 // **🔹 Rota para visualizar o QR Code**
 app.get('/qr', (req, res) => {
   if (qrCodeBase64) {
-    res.send(`<img src="${qrCodeBase64}" style="width: 300px; height: 300px;">`);
+    res.send(`
+      <html>
+        <body style="display: flex; align-items: center; justify-content: center; height: 100vh;">
+          <img src="${qrCodeBase64}" alt="QR Code" style="width: 300px; height: 300px;">
+        </body>
+      </html>
+    `);
   } else {
     res.status(400).json({ error: '⚠️ O bot ainda não está pronto ou o QR Code expirou. Tente novamente.' });
   }
