@@ -6,9 +6,10 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-let client = null; // Armazena a instância do bot
+let client = null; // Instância do bot
 let isBotReady = false; // Indica se o bot está pronto
-let messages = {}; // Armazena mensagens das conversas
+let qrCodeBase64 = ''; // Armazena o QR Code
+let messages = {}; // Armazena as conversas
 
 async function startBot() {
   try {
@@ -16,6 +17,7 @@ async function startBot() {
       'bot-session',
       (base64Qr, asciiQR) => {
         console.log('📷 Novo QR Code gerado! Escaneie para conectar.');
+        qrCodeBase64 = base64Qr; // Armazena QR Code para exibição
       },
       undefined,
       {
@@ -42,18 +44,21 @@ async function startBot() {
     console.log('✅ Bot conectado ao WhatsApp!');
     isBotReady = true;
 
-    // Captura mensagens recebidas
+    // Captura mensagens recebidas e armazena
     client.onMessage(async (message) => {
       console.log(`📩 Nova mensagem de ${message.from}: ${message.body}`);
 
-      // Armazena a mensagem na conversa do usuário
       if (!messages[message.from]) {
         messages[message.from] = [];
       }
-      messages[message.from].push({ type: 'received', text: message.body, timestamp: new Date() });
+      messages[message.from].push({
+        type: 'received',
+        text: message.body,
+        timestamp: new Date()
+      });
     });
 
-    // Verifica a conexão do bot a cada 5 segundos
+    // Mantém a conexão ativa
     setInterval(async () => {
       const isConnected = await client.isConnected();
       if (!isConnected) {
@@ -71,33 +76,35 @@ async function startBot() {
 // Inicia o bot ao rodar o servidor
 startBot();
 
-// **Nova Rota Para Obter o QR Code**
+// **🔹 Rota para visualizar o QR Code**
 app.get('/qr', (req, res) => {
-  if (isBotReady) {
-    res.json({ success: true, message: '✅ O bot está pronto! Escaneie o QR Code para conectar.' });
+  if (qrCodeBase64) {
+    res.send(`<img src="${qrCodeBase64}" style="width: 300px; height: 300px;">`);
   } else {
-    console.log('⚠️ Tentativa de acessar /qr enquanto o bot não está pronto.');
-    res.status(400).json({ error: '⚠️ O bot ainda não está pronto. Aguarde e tente novamente.' });
+    res.status(400).json({ error: '⚠️ O bot ainda não está pronto ou o QR Code expirou. Tente novamente.' });
   }
 });
 
-// **Endpoint para enviar mensagens pelo WhatsApp**
+// **🔹 Endpoint para enviar mensagens pelo WhatsApp**
 app.post('/send-message', async (req, res) => {
   const { number, message } = req.body;
 
   if (!isBotReady || !client) {
-    console.log('⚠️ Tentativa de envio de mensagem enquanto o bot não estava pronto.');
     return res.status(500).json({ error: '⚠️ O bot ainda não está pronto. Aguarde e tente novamente.' });
   }
 
   try {
     await client.sendText(`${number}@c.us`, message);
 
-    // Armazena a mensagem enviada
+    // Armazena mensagem enviada
     if (!messages[number]) {
       messages[number] = [];
     }
-    messages[number].push({ type: 'sent', text: message, timestamp: new Date() });
+    messages[number].push({
+      type: 'sent',
+      text: message,
+      timestamp: new Date()
+    });
 
     res.json({ success: true, message: '✅ Mensagem enviada com sucesso!' });
   } catch (error) {
@@ -106,12 +113,12 @@ app.post('/send-message', async (req, res) => {
   }
 });
 
-// **Endpoint para listar conversas**
+// **🔹 Endpoint para listar todas as conversas**
 app.get('/conversations', (req, res) => {
   res.json(messages);
 });
 
-// **Endpoint para buscar mensagens de um contato específico**
+// **🔹 Endpoint para buscar mensagens de um contato específico**
 app.get('/conversations/:number', (req, res) => {
   const number = req.params.number;
   if (messages[number]) {
@@ -121,7 +128,7 @@ app.get('/conversations/:number', (req, res) => {
   }
 });
 
-// **Inicia a API na porta correta no Railway**
+// **🔹 Inicia a API na porta correta no Railway**
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 API rodando na porta ${PORT}`);
