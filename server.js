@@ -27,19 +27,19 @@ async function startBot() {
         mkdirFolderToken: 'bot-session',
         folderNameToken: 'bot-session',
         logQR: false,
-        puppeteerOptions: {
-          executablePath: '/usr/bin/chromium-browser', // 🚀 Força o uso do Chromium no Railway
-          args: [
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',
-            '--disable-accelerated-2d-canvas',
-            '--no-first-run',
-            '--no-zygote',
-            '--single-process',
-            '--disable-gpu'
-          ]
-        }
+       puppeteerOptions: {
+  executablePath: process.env.CHROME_BIN || '/usr/bin/google-chrome-stable', // Usa variável de ambiente do Railway
+  args: [
+    '--no-sandbox',
+    '--disable-setuid-sandbox',
+    '--disable-dev-shm-usage',
+    '--disable-accelerated-2d-canvas',
+    '--no-first-run',
+    '--no-zygote',
+    '--single-process',
+    '--disable-gpu'
+  ]
+}
       }
     );
 
