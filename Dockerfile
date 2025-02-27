@@ -2,7 +2,7 @@
 FROM node:18-bullseye
 
 # Instala as dependências do Chromium necessárias para o Puppeteer
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
   libnss3 libxss1 libasound2 \
   libatk1.0-0 libatk-bridge2.0-0 libcups2 \
   libxcomposite1 libxdamage1 libxrandr2 \
@@ -10,15 +10,14 @@ RUN apt-get update && apt-get install -y \
   libxshmfence1 libxinerama1 libxfixes3 fonts-liberation \
   && rm -rf /var/lib/apt/lists/*
 
-
 # Define o diretório de trabalho
 WORKDIR /app
 
-# Copia os arquivos do projeto
-COPY package.json package-lock.json ./
+# Copia apenas o package.json para evitar erro caso o package-lock.json não exista
+COPY package.json ./
 
 # Instala as dependências do Node.js
-RUN npm install --only=production
+RUN npm install
 
 # Copia o restante do código do projeto
 COPY . .
