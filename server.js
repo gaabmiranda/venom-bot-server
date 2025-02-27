@@ -64,8 +64,9 @@ async function startBot() {
     setInterval(async () => {
       const isConnected = await client.isConnected();
       if (!isConnected) {
-        console.log('⚠️ O bot perdeu a conexão! Escaneie o QR Code novamente.');
+        console.log('⚠️ O bot perdeu a conexão! Tentando reconectar...');
         isBotReady = false;
+        startBot(); // 🔄 Reinicia o bot automaticamente em caso de falha
       }
     }, 5000);
 
