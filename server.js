@@ -18,22 +18,23 @@ async function startBot() {
       },
       undefined,
       {
-        headless: true, // O Railway não suporta navegador visível
-        useChrome: false, // Evita conflitos com Chrome
+        headless: true, // O Railway NÃO permite abrir navegador visível
+        useChrome: true, // Usa Chrome externo em vez do Puppeteer
+        executablePath: '/usr/bin/google-chrome', // Caminho para o Chrome instalado no Railway
         disableSpins: true,
-        mkdirFolderToken: 'bot-session', // Deve ser uma string válida
+        mkdirFolderToken: 'bot-session',
         folderNameToken: 'bot-session',
         logQR: false,
-        puppeteerOptions: { args: [
+        browserArgs: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
           '--disable-dev-shm-usage',
           '--disable-accelerated-2d-canvas',
           '--no-first-run',
           '--no-zygote',
-          '--single-process',
-          '--disable-gpu'
-        ] }
+          '--disable-gpu',
+          '--single-process'
+        ]
       }
     );
 
