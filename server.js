@@ -8,6 +8,7 @@ app.use(cors());
 
 let client = null; // Armazena a instância do bot
 let isBotReady = false; // Indica se o bot está pronto
+let messages = {}; // Armazena mensagens das conversas
 
 async function startBot() {
   try {
@@ -18,9 +19,9 @@ async function startBot() {
       },
       undefined,
       {
-        headless: true, // O Railway NÃO permite abrir navegador visível
-        useChrome: true, // Usa Chrome externo em vez do Puppeteer
-        executablePath: '/usr/bin/google-chrome', // Caminho para o Chrome instalado no Railway
+        headless: true,
+        useChrome: true,
+        executablePath: '/usr/bin/google-chrome',
         disableSpins: true,
         mkdirFolderToken: 'bot-session',
         folderNameToken: 'bot-session',
@@ -39,7 +40,18 @@ async function startBot() {
     );
 
     console.log('✅ Bot conectado ao WhatsApp!');
-    isBotReady = true; // Marca o bot como pronto para enviar mensagens
+    isBotReady = true;
+
+    // Captura mensagens recebidas
+    client.onMessage(async (message) => {
+      console.log(`📩 Nova mensagem de ${message.from}: ${message.body}`);
+
+      // Armazena a mensagem na conversa do usuário
+      if (!messages[message.from]) {
+        messages[message.from] = [];
+      }
+      messages[message.from].push({ type: 'received', text: message.body, timestamp: new Date() });
+    });
 
     // Verifica a conexão do bot a cada 5 segundos
     setInterval(async () => {
@@ -80,10 +92,32 @@ app.post('/send-message', async (req, res) => {
 
   try {
     await client.sendText(`${number}@c.us`, message);
+
+    // Armazena a mensagem enviada
+    if (!messages[number]) {
+      messages[number] = [];
+    }
+    messages[number].push({ type: 'sent', text: message, timestamp: new Date() });
+
     res.json({ success: true, message: '✅ Mensagem enviada com sucesso!' });
   } catch (error) {
     console.error('❌ Erro ao enviar mensagem:', error);
     res.status(500).json({ error: 'Erro ao enviar mensagem', details: error.toString() });
+  }
+});
+
+// **Endpoint para listar conversas**
+app.get('/conversations', (req, res) => {
+  res.json(messages);
+});
+
+// **Endpoint para buscar mensagens de um contato específico**
+app.get('/conversations/:number', (req, res) => {
+  const number = req.params.number;
+  if (messages[number]) {
+    res.json(messages[number]);
+  } else {
+    res.status(404).json({ error: 'Nenhuma conversa encontrada para este número.' });
   }
 });
 
