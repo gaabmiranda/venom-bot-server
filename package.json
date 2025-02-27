@@ -1,20 +1,17 @@
 {
-  "name": "script-venom",
+  "name": "venom-bot-server",
   "version": "1.0.0",
-  "description": "Bot WhatsApp usando Venom-Bot",
-  "main": "server.js",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
   "author": "",
   "license": "ISC",
-  "keywords": [],
+  "description": "",
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.21.2",
-    "venom-bot": "3.1.12"
-  },
-  "devDependencies": {},
-  "scripts": {
-    "start": "node server.js",
-    "postinstall": "npm install --omit=dev"
+    "venom-bot": "^4.2.1"
   }
 }
-
