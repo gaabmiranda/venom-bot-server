@@ -6,10 +6,10 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-let client = null; // Instância do bot
-let isBotReady = false; // Indica se o bot está pronto
-let qrCodeBase64 = ''; // Armazena o QR Code
-let messages = {}; // Armazena as conversas
+let client = null;          // Instância do bot
+let isBotReady = false;     // Indica se o bot está pronto
+let qrCodeBase64 = '';      // Armazena o QR Code em Base64
+let messages = {};          // Armazena as conversas
 
 async function startBot() {
   try {
@@ -17,20 +17,18 @@ async function startBot() {
       'bot-session',
       (base64Qr, asciiQR) => {
         console.log('📷 Novo QR Code gerado! Escaneie para conectar.');
-        qrCodeBase64 = base64Qr; // Armazena QR Code para exibição
+        qrCodeBase64 = base64Qr;  // Armazena o QR Code para exibição
       },
       undefined,
       {
-        headless: false, 
-        useChrome: true, // Força o uso do Chrome/Chromium instalado no sistema
-        executablePath: '/usr/bin/chromium-browser', // Caminho explícito para o Chromium
+        headless: true,  // Necessário no Railway (sem interface gráfica)
+        useChrome: true, // Força o uso do navegador instalado
+        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium-browser',
         disableSpins: true,
         mkdirFolderToken: 'bot-session',
         folderNameToken: 'bot-session',
-        logQR: false,
+        logQR: true, // Para que o QR code seja gerado mesmo que não seja exibido
         puppeteerOptions: {
-          // Não utiliza process.env, definindo explicitamente o caminho
-          executablePath: '/usr/bin/chromium-browser',
           args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
@@ -61,7 +59,7 @@ async function startBot() {
       });
     });
 
-    // Mantém a conexão ativa; se o bot perder a conexão, tenta reconectar
+    // Verifica a conexão do bot a cada 5 segundos
     setInterval(async () => {
       const isConnected = await client.isConnected();
       if (!isConnected) {
@@ -80,9 +78,10 @@ async function startBot() {
 // Inicia o bot ao rodar o servidor
 startBot();
 
-// Rota para visualizar o QR Code
+// Endpoint para visualizar o QR Code
 app.get('/qr', (req, res) => {
   if (qrCodeBase64) {
+    // Exibe o QR Code como uma imagem HTML
     res.send(`
       <html>
         <body style="display:flex; justify-content:center; align-items:center; height:100vh;">
@@ -134,7 +133,7 @@ app.get('/conversations/:number', (req, res) => {
   }
 });
 
-// Inicia a API na porta definida pelo Railway ou na porta 3000
+// Inicia a API na porta definida pelo Railway ou 3000
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 API rodando na porta ${PORT}`);
