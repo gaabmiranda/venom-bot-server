@@ -1,43 +1,32 @@
-# Etapa de build: Usa uma imagem maior para instalar dependências
-FROM node:18-bullseye AS builder
-
-ENV DEBIAN_FRONTEND=noninteractive
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
-  chromium \
-  && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-WORKDIR /app
-
-# Copia o package.json e instala as dependências de produção
-COPY package.json ./
-RUN npm install --only=production
-
-# Copia todo o código do projeto (incluindo server.js)
-COPY . .
-
-# Etapa final: Imagem mais leve
+# Usa a imagem Node.js baseada em Alpine, que é leve
 FROM node:18-alpine
 
-# Instala apenas as dependências essenciais para o Chromium no Alpine
+# Instala as dependências essenciais para o Chromium/Puppeteer e para compilar o sharp
 RUN apk add --no-cache \
   chromium \
   nss \
   freetype \
   harfbuzz \
   ca-certificates \
-  ttf-freefont
+  ttf-freefont \
+  make gcc g++ python3 vips-dev fftw-dev
 
-# Define variáveis de ambiente para que o Puppeteer use o Chromium instalado
+# Define variáveis de ambiente para o Puppeteer: impede o download do Chromium e define o caminho do Chromium instalado
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
+# Define o diretório de trabalho
 WORKDIR /app
 
-# Copia os arquivos do estágio de build
-COPY --from=builder /app /app
+# Copia o package.json (e, se existir, o package-lock.json)
+COPY package.json ./
+RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
 
+# Copia o restante do código do projeto
+COPY . .
+
+# Expõe a porta 3000
 EXPOSE 3000
 
-# Comando de inicialização do servidor
+# Comando para iniciar o servidor
 CMD ["node", "server.js"]
