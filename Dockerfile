@@ -1,11 +1,20 @@
-# Usa a imagem Node.js baseada em Alpine, que é mais leve
+# Etapa de build: Usa uma imagem maior para instalar dependências
+FROM node:18-bullseye AS builder
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+  chromium \
+  && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+COPY package.json ./
+RUN npm install --only=production
+
+# Etapa final: Imagem mais leve
 FROM node:18-alpine
 
-# Define variáveis de ambiente para Puppeteer (impede download do Chromium)
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
-
-# Instala as dependências essenciais para o Chromium/Puppeteer
+# Instala apenas as dependências essenciais do Chromium no Alpine
 RUN apk add --no-cache \
   chromium \
   nss \
@@ -14,22 +23,11 @@ RUN apk add --no-cache \
   ca-certificates \
   ttf-freefont
 
-# Define o diretório de trabalho
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+
 WORKDIR /app
+COPY --from=builder /app /app
 
-# Copia os arquivos essenciais
-COPY package.json ./
-# Instala as dependências do Node.js
-RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
-
-# Copia a pasta de sessão para dentro do container
-COPY bot-session/ ./bot-session/
-
-# Copia o restante do código do projeto
-COPY . .
-
-# Expõe a porta 3000
 EXPOSE 3000
-
-# Comando para iniciar o servidor
 CMD ["node", "server.js"]
