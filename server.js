@@ -21,7 +21,7 @@ async function startBot() {
       },
       undefined,
       {
-        headless: true, 
+        headless: false, 
         useChrome: true, // Força o uso do Chrome/Chromium instalado no sistema
         executablePath: '/usr/bin/chromium-browser', // Caminho explícito para o Chromium
         disableSpins: true,
