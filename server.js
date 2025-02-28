@@ -14,20 +14,20 @@ let messages = {};          // Armazena as conversas
 async function startBot() {
   try {
     client = await venom.create(
-      'bot-session',  // Se a sessão já existir, ela será carregada
+      'bot-session',  // Se a sessão já existe, ela será carregada automaticamente
       (base64Qr, asciiQR) => {
         console.log('📷 Novo QR Code gerado! Escaneie para conectar.');
         qrCodeBase64 = base64Qr;  // Armazena o QR Code para exibição
       },
       undefined,
       {
-        headless: true,  // Necessário no Railway (sem interface gráfica)
-        useChrome: true, // Força o uso do navegador instalado
+        headless: true,                // Necessário no Railway (sem interface gráfica)
+        useChrome: true,               // Força o uso do navegador instalado
         executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium-browser',
         disableSpins: true,
         mkdirFolderToken: 'bot-session',
         folderNameToken: 'bot-session',
-        logQR: true,     // Gera o QR Code para callback
+        logQR: true,                   // Gera o QR Code se necessário
         puppeteerOptions: {
           args: [
             '--no-sandbox',
@@ -37,7 +37,8 @@ async function startBot() {
             '--no-first-run',
             '--no-zygote',
             '--single-process',
-            '--disable-gpu'
+            '--disable-gpu',
+            '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36'
           ]
         }
       }
@@ -45,20 +46,10 @@ async function startBot() {
 
     console.log('✅ Bot conectado ao WhatsApp!');
     isBotReady = true;
-
-    // Adiciona um timeout extra para ver se o bot conclui o login
-    setTimeout(async () => {
-      try {
-        const connected = await client.isConnected();
-        if (connected) {
-          console.log('✅ Bot está logado após o tempo de espera.');
-        } else {
-          console.log('⚠️ Bot não está logado após 30 segundos. Verifique o QR Code e tente escanear novamente.');
-        }
-      } catch (err) {
-        console.error('❌ Erro ao verificar conexão após timeout:', err);
-      }
-    }, 30000);
+    
+    // Se a sessão foi carregada com sucesso, o QR Code pode não ser necessário.
+    // Se qrCodeBase64 estiver preenchido, significa que o login ainda não foi efetuado.
+    // Deixe o QR Code ativo até que a sessão seja autenticada.
 
     // Captura mensagens recebidas e as armazena
     client.onMessage(async (message) => {
@@ -73,19 +64,23 @@ async function startBot() {
       });
     });
 
-    // Mantém a conexão ativa; se o bot perder a conexão, tenta reconectar
-    setInterval(async () => {
-      try {
-        const isConnected = await client.isConnected();
-        if (!isConnected) {
-          console.log('⚠️ O bot perdeu a conexão! Tentando reconectar...');
-          isBotReady = false;
-          await startBot();
+    // Inicia a verificação de conexão somente após 90 segundos para dar tempo de escanear o QR Code
+    setTimeout(() => {
+      setInterval(async () => {
+        try {
+          const connected = await client.isConnected();
+          if (!connected) {
+            console.log('⚠️ O bot perdeu a conexão! Tentando reconectar...');
+            isBotReady = false;
+            await startBot();
+          } else {
+            console.log('✅ Bot está logado e conectado.');
+          }
+        } catch (err) {
+          console.error('❌ Erro ao checar conexão:', err);
         }
-      } catch (err) {
-        console.error('❌ Erro ao checar conexão:', err);
-      }
-    }, 5000);
+      }, 15000);
+    }, 90000);
 
   } catch (error) {
     console.error('❌ Erro ao iniciar o bot:', error);
@@ -93,12 +88,12 @@ async function startBot() {
   }
 }
 
-// Inicia o bot quando o servidor é iniciado
+// Inicia o bot ao rodar o servidor
 startBot();
 
 // Endpoint para visualizar o QR Code
 app.get('/qr', (req, res) => {
-  // Se o bot estiver pronto e não houver QR Code, assume que a sessão foi carregada
+  // Se o bot está pronto mas não há QR Code, assume que a sessão já foi carregada
   if (isBotReady && !qrCodeBase64) {
     res.json({ success: true, message: '✅ Bot já conectado. Não há QR Code necessário.' });
   } else if (qrCodeBase64) {
