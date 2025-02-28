@@ -17,18 +17,18 @@ async function startBot() {
       'bot-session',
       (base64Qr, asciiQR) => {
         console.log('📷 Novo QR Code gerado! Escaneie para conectar.');
-        qrCodeBase64 = base64Qr; // Armazena o QR Code para exibição
+        qrCodeBase64 = base64Qr; // Armazena QR Code para exibição
       },
       undefined,
       {
-        headless: true, // O Railway não suporta navegador visível
-        useChrome: false, // Força o uso do Chromium instalado, não o download do Puppeteer
+        headless: true,
+        useChrome: true, // Força o uso do navegador instalado externamente
+        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium-browser',
         disableSpins: true,
         mkdirFolderToken: 'bot-session',
         folderNameToken: 'bot-session',
         logQR: false,
         puppeteerOptions: {
-          executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium-browser',
           args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
@@ -60,7 +60,7 @@ async function startBot() {
       });
     });
 
-    // Mantém a conexão ativa; se o bot perder a conexão, tenta reconectar
+    // Mantém a conexão ativa; se perder, tenta reconectar
     setInterval(async () => {
       const isConnected = await client.isConnected();
       if (!isConnected) {
@@ -84,8 +84,8 @@ app.get('/qr', (req, res) => {
   if (qrCodeBase64) {
     res.send(`
       <html>
-        <body style="display: flex; align-items: center; justify-content: center; height: 100vh;">
-          <img src="${qrCodeBase64}" alt="QR Code" style="width: 300px; height: 300px;">
+        <body style="display:flex; justify-content:center; align-items:center; height:100vh;">
+          <img src="${qrCodeBase64}" alt="QR Code" style="width:300px; height:300px;">
         </body>
       </html>
     `);
@@ -137,7 +137,7 @@ app.get('/conversations/:number', (req, res) => {
   }
 });
 
-// Inicia a API na porta definida pelo Railway ou 3000
+// Inicia a API na porta definida pelo Railway ou na porta 3000
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 API rodando na porta ${PORT}`);
