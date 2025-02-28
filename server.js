@@ -21,14 +21,16 @@ async function startBot() {
       },
       undefined,
       {
-        headless: false,
-        useChrome: true, // Força o uso do navegador instalado externamente
-        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium-browser',
+        headless: true, 
+        useChrome: true, // Força o uso do Chrome/Chromium instalado no sistema
+        executablePath: '/usr/bin/chromium-browser', // Caminho explícito para o Chromium
         disableSpins: true,
         mkdirFolderToken: 'bot-session',
         folderNameToken: 'bot-session',
         logQR: false,
         puppeteerOptions: {
+          // Não utiliza process.env, definindo explicitamente o caminho
+          executablePath: '/usr/bin/chromium-browser',
           args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
@@ -49,7 +51,6 @@ async function startBot() {
     // Captura mensagens recebidas e as armazena
     client.onMessage(async (message) => {
       console.log(`📩 Nova mensagem de ${message.from}: ${message.body}`);
-
       if (!messages[message.from]) {
         messages[message.from] = [];
       }
@@ -60,7 +61,7 @@ async function startBot() {
       });
     });
 
-    // Mantém a conexão ativa; se perder, tenta reconectar
+    // Mantém a conexão ativa; se o bot perder a conexão, tenta reconectar
     setInterval(async () => {
       const isConnected = await client.isConnected();
       if (!isConnected) {
@@ -97,14 +98,11 @@ app.get('/qr', (req, res) => {
 // Endpoint para enviar mensagens pelo WhatsApp
 app.post('/send-message', async (req, res) => {
   const { number, message } = req.body;
-
   if (!isBotReady || !client) {
     return res.status(500).json({ error: '⚠️ O bot ainda não está pronto. Aguarde e tente novamente.' });
   }
-
   try {
     await client.sendText(`${number}@c.us`, message);
-
     // Armazena mensagem enviada
     if (!messages[number]) {
       messages[number] = [];
@@ -114,7 +112,6 @@ app.post('/send-message', async (req, res) => {
       text: message,
       timestamp: new Date()
     });
-
     res.json({ success: true, message: '✅ Mensagem enviada com sucesso!' });
   } catch (error) {
     console.error('❌ Erro ao enviar mensagem:', error);
