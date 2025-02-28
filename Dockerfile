@@ -1,10 +1,7 @@
-# Usa a imagem Node.js baseada em Alpine, que é muito mais leve
+# Usa a imagem Node.js baseada em Alpine, que é mais leve e não utiliza apt-get
 FROM node:18-alpine
 
-# Define a variável de ambiente para o Chromium
-ENV CHROME_BIN=/usr/bin/chromium-browser
-
-# Instala as dependências essenciais para rodar o Chromium/Puppeteer
+# Instala as dependências essenciais para o Chromium/Puppeteer
 RUN apk add --no-cache \
   chromium \
   nss \
@@ -13,12 +10,14 @@ RUN apk add --no-cache \
   ca-certificates \
   ttf-freefont
 
+# Define a variável de ambiente para que o Puppeteer saiba onde encontrar o Chromium
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+
 # Define o diretório de trabalho
 WORKDIR /app
 
 # Copia o package.json (e, se existir, o package-lock.json)
 COPY package.json ./
-# Se houver package-lock.json, o comando abaixo pode ser usado:
 RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
 
 # Copia o restante do código do projeto
