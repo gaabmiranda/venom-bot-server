@@ -21,7 +21,7 @@ async function startBot() {
       },
       undefined,
       {
-        headless: true,
+        headless: false,
         useChrome: true, // Força o uso do navegador instalado externamente
         executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium-browser',
         disableSpins: true,
