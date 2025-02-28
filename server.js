@@ -28,7 +28,7 @@ async function startBot() {
         folderNameToken: 'bot-session',
         logQR: false,
        puppeteerOptions: {
-  executablePath: process.env.CHROME_BIN || '/usr/bin/google-chrome-stable', // Usa variável de ambiente do Railway
+  executablePath: '/usr/bin/chromium-browser',
   args: [
     '--no-sandbox',
     '--disable-setuid-sandbox',
