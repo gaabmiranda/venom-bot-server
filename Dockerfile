@@ -1,5 +1,9 @@
-# Usa a imagem Node.js baseada em Alpine, que é mais leve e não utiliza apt-get
+# Usa a imagem Node.js baseada em Alpine, que é mais leve e utiliza apk
 FROM node:18-alpine
+
+# Define variáveis de ambiente para Puppeteer
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
 # Instala as dependências essenciais para o Chromium/Puppeteer
 RUN apk add --no-cache \
@@ -9,9 +13,6 @@ RUN apk add --no-cache \
   harfbuzz \
   ca-certificates \
   ttf-freefont
-
-# Define a variável de ambiente para que o Puppeteer saiba onde encontrar o Chromium
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
 # Define o diretório de trabalho
 WORKDIR /app
