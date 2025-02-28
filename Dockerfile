@@ -1,8 +1,11 @@
+# Usa a imagem Node.js baseada em Alpine, que é mais leve
 FROM node:18-alpine
 
+# Define variáveis de ambiente para Puppeteer (impede download do Chromium)
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
+# Instala as dependências essenciais para o Chromium/Puppeteer
 RUN apk add --no-cache \
   chromium \
   nss \
@@ -11,13 +14,22 @@ RUN apk add --no-cache \
   ca-certificates \
   ttf-freefont
 
+# Define o diretório de trabalho
 WORKDIR /app
 
+# Copia os arquivos essenciais
 COPY package.json ./
+# Instala as dependências do Node.js
 RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
 
+# Copia a pasta de sessão para dentro do container
+COPY bot-session/ ./bot-session/
+
+# Copia o restante do código do projeto
 COPY . .
 
+# Expõe a porta 3000
 EXPOSE 3000
 
+# Comando para iniciar o servidor
 CMD ["node", "server.js"]
