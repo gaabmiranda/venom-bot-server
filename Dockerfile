@@ -18,7 +18,7 @@ WORKDIR /app
 
 # Copia o package.json (e, se existir, o package-lock.json)
 COPY package.json ./
-# Instala as dependências do Node.js
+# Se houver package-lock.json, o comando abaixo pode ser usado:
 RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
 
 # Copia o restante do código do projeto
