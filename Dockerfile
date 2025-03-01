@@ -1,28 +1,33 @@
-# Use uma imagem base com a versão recomendada do Node
-FROM node:18.17.0
+# Usa a imagem Node.js baseada em Debian Slim
+FROM node:18-bullseye-slim
 
-# Instale as dependências do sistema necessárias para o Chromium rodar corretamente
-RUN apt-get update && apt-get install -y \
-    libnss3 \
-    libatk-bridge2.0-0 \
-    libx11-xcb1 \
-    libxcomposite1 \
-    libxdamage1 \
-    libxrandr2 \
-  && rm -rf /var/lib/apt/lists/*
+# Define variáveis de ambiente para evitar o download do Chromium pelo Puppeteer
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+
+# Configura o apt para não ser interativo
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Instala as dependências essenciais para o Chromium/Puppeteer
+RUN apt-get update && apt-get install -y --no-install-recommends \
+  chromium \
+  ca-certificates \
+  fonts-liberation \
+  && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Define o diretório de trabalho
 WORKDIR /app
 
-# Copie os arquivos de configuração e instale as dependências do projeto
-COPY package*.json ./
-RUN npm install
+# Copia os arquivos essenciais do projeto
+COPY package.json ./
+# Instala as dependências do Node.js
+RUN npm install --only=production
 
-# Copie o restante do código para a imagem
+# Copia o restante do código do projeto
 COPY . .
 
-# Defina a variável de ambiente (opcional)
-ENV NODE_ENV=production
+# Expõe a porta do servidor
+EXPOSE 3000
 
-# Comando para iniciar a aplicação
-CMD ["node", "index.js"]
+# Comando para iniciar o servidor
+CMD ["node", "server.js"]
