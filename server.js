@@ -14,19 +14,16 @@ async function startBot() {
   try {
     client = await venom.create(
       'bot-session',
-      // Callback para geração do QR Code
-      (base64Qr, asciiQR, attempts, urlCode) => {
+      (base64Qr, asciiQR) => {
         console.log('📷 Novo QR Code gerado!');
-        console.log(asciiQR); // Exibe o QR Code em ASCII no terminal para visualização
-        qrCodeBase64 = base64Qr; // Armazena o QR Code em Base64
+        qrCodeBase64 = base64Qr; // Salva o QR Code
       },
-      // Callback opcional para monitorar o status da sessão
-      (statusSession, session) => {
-        console.log('Status da sessão:', statusSession);
-      },
+      undefined,
       {
         headless: true,
-        useChrome: false,
+        // Em vez de usar "useChrome: false", definimos o caminho para o executável do Chrome/Chromium.
+        // Verifique se a variável de ambiente CHROME_BIN está definida ou informe o caminho padrão.
+        executablePath: process.env.CHROME_BIN || '/usr/bin/chromium-browser',
         disableSpins: true,
         mkdirFolderToken: true,
         folderNameToken: 'bot-session',
