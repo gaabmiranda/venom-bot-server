@@ -14,11 +14,16 @@ async function startBot() {
   try {
     client = await venom.create(
       'bot-session',
-      (base64Qr, asciiQR) => {
+      // Callback para geração do QR Code
+      (base64Qr, asciiQR, attempts, urlCode) => {
         console.log('📷 Novo QR Code gerado!');
-        qrCodeBase64 = base64Qr; // Salva o QR Code
+        console.log(asciiQR); // Exibe o QR Code em ASCII no terminal para visualização
+        qrCodeBase64 = base64Qr; // Armazena o QR Code em Base64
       },
-      undefined,
+      // Callback opcional para monitorar o status da sessão
+      (statusSession, session) => {
+        console.log('Status da sessão:', statusSession);
+      },
       {
         headless: true,
         useChrome: false,
@@ -40,7 +45,6 @@ async function startBot() {
 
     console.log('✅ Bot conectado ao WhatsApp!');
     isBotReady = true;
-
   } catch (error) {
     console.error('❌ Erro ao iniciar o bot:', error);
     isBotReady = false;
@@ -50,7 +54,7 @@ async function startBot() {
 // Inicia o bot quando o servidor iniciar
 startBot();
 
-// **Nova Rota Para Obter o QR Code**
+// Rota para obter o QR Code
 app.get('/qr', (req, res) => {
   if (qrCodeBase64) {
     res.json({ success: true, qrCode: qrCodeBase64 });
